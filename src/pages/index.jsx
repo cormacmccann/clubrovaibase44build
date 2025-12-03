@@ -34,6 +34,8 @@ import MatchLive from "./MatchLive";
 
 import MatchCenter from "./MatchCenter";
 
+import RegistrarDashboard from "./RegistrarDashboard";
+
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
 const PAGES = {
@@ -71,6 +73,8 @@ const PAGES = {
     MatchLive: MatchLive,
     
     MatchCenter: MatchCenter,
+    
+    RegistrarDashboard: RegistrarDashboard,
     
 }
 
@@ -132,6 +136,8 @@ function PagesContent() {
                 <Route path="/MatchLive" element={<MatchLive />} />
                 
                 <Route path="/MatchCenter" element={<MatchCenter />} />
+                
+                <Route path="/RegistrarDashboard" element={<RegistrarDashboard />} />
                 
             </Routes>
         </Layout>

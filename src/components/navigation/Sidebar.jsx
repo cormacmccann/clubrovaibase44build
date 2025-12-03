@@ -48,6 +48,7 @@ const menuItems = [
   { icon: Megaphone, label: 'Sponsors', page: 'Sponsors', permission: 'manage_sponsors' },
   { icon: Newspaper, label: 'News', page: 'News', permission: 'manage_members' },
   { icon: Radio, label: 'Match Live', page: 'MatchLive', permission: 'manage_events' },
+  { icon: Shield, label: 'Registrar', page: 'RegistrarDashboard', permission: 'manage_members' },
 ];
 
 export default function Sidebar({ currentPage }) {

@@ -43,6 +43,10 @@ export const VolunteerTask = base44.entities.VolunteerTask;
 
 export const MatchLive = base44.entities.MatchLive;
 
+export const ComplianceRule = base44.entities.ComplianceRule;
+
+export const VettingRecord = base44.entities.VettingRecord;
+
 
 
 // auth sdk:
