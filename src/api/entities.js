@@ -39,6 +39,10 @@ export const Notification = base44.entities.Notification;
 
 export const GroupPaymentPlan = base44.entities.GroupPaymentPlan;
 
+export const VolunteerTask = base44.entities.VolunteerTask;
+
+export const MatchLive = base44.entities.MatchLive;
+
 
 
 // auth sdk:

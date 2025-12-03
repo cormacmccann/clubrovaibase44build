@@ -29,8 +29,10 @@ import {
 } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
+import SafeChatIndicator from '@/components/chat/SafeChatIndicator';
+
 export default function Chat() {
-  const { currentClub, user, isCoach } = useClub();
+  const { currentClub, user, isCoach, familyMembers, childMembers } = useClub();
   const [conversations, setConversations] = useState([]);
   const [messages, setMessages] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
@@ -196,6 +198,51 @@ export default function Chat() {
     }
   };
 
+  // Two-Deep Rule: Check if attempting to DM a child, add guardians
+  const startSafeDirectMessage = async (targetMember) => {
+    if (targetMember.member_category === 'child' && targetMember.managed_by?.length > 0) {
+      // Get guardians
+      const guardians = await Promise.all(
+        targetMember.managed_by.map(async (guardianId) => {
+          const guardianMembers = await base44.entities.Member.filter({ user_id: guardianId });
+          return guardianMembers[0];
+        })
+      );
+
+      // Create conversation with child AND guardians (Two-Deep Rule)
+      const participants = [
+        {
+          user_id: user.id,
+          user_email: user.email,
+          name: user.full_name,
+          role: isCoach ? 'coach' : 'member',
+          joined_at: new Date().toISOString(),
+          is_admin: isCoach
+        },
+        ...guardians.filter(Boolean).map(g => ({
+          user_id: g.user_id,
+          user_email: g.email,
+          name: `${g.first_name} ${g.last_name}`,
+          role: 'guardian',
+          joined_at: new Date().toISOString(),
+          is_admin: false
+        }))
+      ];
+
+      const newConvo = await base44.entities.ChatConversation.create({
+        club_id: currentClub.id,
+        type: 'direct',
+        name: `${targetMember.first_name}'s Chat (Safeguarded)`,
+        participants,
+        settings: { safeguarded: true, child_member_id: targetMember.id },
+        is_active: true
+      });
+
+      await loadConversations();
+      setSelectedConversation(newConvo);
+    }
+  };
+
   return (
     <div className="h-[calc(100vh-4rem)] lg:h-screen flex">
       {/* Conversations List */}
@@ -279,7 +326,13 @@ export default function Chat() {
               <Users className="w-5 h-5 text-blue-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-gray-900">{selectedConversation.name}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-gray-900">{selectedConversation.name}</h3>
+                <SafeChatIndicator 
+                  conversation={selectedConversation} 
+                  familyMembers={familyMembers}
+                />
+              </div>
               <p className="text-sm text-gray-500">
                 {selectedConversation.participants?.length || 0} members
               </p>

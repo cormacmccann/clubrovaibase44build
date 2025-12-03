@@ -22,7 +22,8 @@ import {
   UserCircle,
   LogOut,
   Menu,
-  X
+  X,
+  Radio
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -46,6 +47,7 @@ const menuItems = [
   { icon: Trophy, label: 'Tournaments', page: 'Tournaments', permission: 'manage_tournaments' },
   { icon: Megaphone, label: 'Sponsors', page: 'Sponsors', permission: 'manage_sponsors' },
   { icon: Newspaper, label: 'News', page: 'News', permission: 'manage_members' },
+  { icon: Radio, label: 'Match Live', page: 'MatchLive', permission: 'manage_events' },
 ];
 
 export default function Sidebar({ currentPage }) {

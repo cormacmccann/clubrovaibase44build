@@ -4,9 +4,11 @@ import { base44 } from '@/api/base44Client';
 import { GlassCard, GlassCardContent, GlassCardHeader } from '@/components/ui/GlassCard';
 import { motion } from 'framer-motion';
 import { format, parseISO, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, addWeeks, subWeeks, isToday } from 'date-fns';
+import { Link } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import {
   Calendar, Plus, ChevronLeft, ChevronRight, Clock, MapPin,
-  Users, Trophy, Filter, List, Grid3X3, Loader2, Sparkles, Check, X as XIcon
+  Users, Trophy, Filter, List, Grid3X3, Loader2, Sparkles, Check, X as XIcon, Radio
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,8 +33,11 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 
+import FamilyRSVP from '@/components/schedule/FamilyRSVP';
+import VolunteerTasksSection from '@/components/schedule/VolunteerTasksSection';
+
 export default function Schedule() {
-  const { currentClub, currentMembership, isClubAdmin, isCoach, user } = useClub();
+  const { currentClub, currentMembership, isClubAdmin, isCoach, user, familyMembers } = useClub();
   const [events, setEvents] = useState([]);
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -171,15 +176,20 @@ export default function Schedule() {
     return configs[type] || { color: 'bg-gray-500', label: type, icon: Calendar };
   };
 
-  const respondToEvent = async (event, status) => {
+  const respondToEvent = async (event, memberId, status) => {
     const attendance = event.attendance || [];
-    const existingIndex = attendance.findIndex(a => a.member_id === user.email);
+    const existingIndex = attendance.findIndex(a => a.member_id === memberId);
+    
+    // Find the member name
+    const member = familyMembers.find(m => m.id === memberId);
+    const memberName = member ? `${member.first_name} ${member.last_name}` : user.full_name;
     
     const newResponse = {
-      member_id: user.email,
-      name: user.full_name,
+      member_id: memberId,
+      name: memberName,
       status,
-      responded_at: new Date().toISOString()
+      responded_at: new Date().toISOString(),
+      responded_by: user.email // Track who made the RSVP
     };
 
     if (existingIndex >= 0) {
@@ -194,6 +204,10 @@ export default function Schedule() {
 
   const getUserResponse = (event) => {
     return event.attendance?.find(a => a.member_id === user.email)?.status;
+  };
+
+  const getMemberResponse = (event, memberId) => {
+    return event.attendance?.find(a => a.member_id === memberId)?.status;
   };
 
   return (
@@ -320,21 +334,29 @@ export default function Schedule() {
                             )}
                           </div>
                         </div>
-                        {/* Quick RSVP buttons */}
-                        <div className="flex gap-1 mt-2">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); respondToEvent(event, 'attending'); }}
-                            className={`flex-1 p-1 rounded text-xs ${userResponse === 'attending' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-green-100'}`}
-                          >
-                            <Check className="w-3 h-3 mx-auto" />
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); respondToEvent(event, 'not_attending'); }}
-                            className={`flex-1 p-1 rounded text-xs ${userResponse === 'not_attending' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-red-100'}`}
-                          >
-                            <XIcon className="w-3 h-3 mx-auto" />
-                          </button>
-                        </div>
+                        {/* Family RSVP - show per-member RSVP for family */}
+                        {familyMembers.length > 1 ? (
+                          <FamilyRSVP 
+                            event={event} 
+                            familyMembers={familyMembers}
+                            onRespond={respondToEvent}
+                          />
+                        ) : (
+                          <div className="flex gap-1 mt-2">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); respondToEvent(event, user.email, 'attending'); }}
+                              className={`flex-1 p-1 rounded text-xs ${userResponse === 'attending' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-green-100'}`}
+                            >
+                              <Check className="w-3 h-3 mx-auto" />
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); respondToEvent(event, user.email, 'not_attending'); }}
+                              className={`flex-1 p-1 rounded text-xs ${userResponse === 'not_attending' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-red-100'}`}
+                            >
+                              <XIcon className="w-3 h-3 mx-auto" />
+                            </button>
+                          </div>
+                        )}
                       </motion.div>
                     );
                   })}
@@ -395,9 +417,19 @@ export default function Schedule() {
                               </span>
                             </div>
                           </div>
-                          {event.team_name && (
-                            <Badge variant="secondary">{event.team_name}</Badge>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {event.team_name && (
+                              <Badge variant="secondary">{event.team_name}</Badge>
+                            )}
+                            {event.event_type === 'match' && (isClubAdmin || isCoach) && (
+                              <Link to={createPageUrl(`MatchLive?event=${event.id}`)}>
+                                <Button size="sm" className="bg-red-500 hover:bg-red-600 gap-1">
+                                  <Radio className="w-3 h-3" />
+                                  Go Live
+                                </Button>
+                              </Link>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
@@ -536,6 +568,16 @@ export default function Schedule() {
                 rows={3}
               />
             </div>
+
+            {/* Volunteer Tasks Section - only show for existing events */}
+            {selectedEvent && (
+              <div className="pt-4 border-t">
+                <VolunteerTasksSection 
+                  event={selectedEvent} 
+                  isAdmin={isClubAdmin || isCoach}
+                />
+              </div>
+            )}
           </div>
 
           <DialogFooter>

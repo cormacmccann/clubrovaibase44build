@@ -31,8 +31,10 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+import FamilyPaymentsSummary from '@/components/payments/FamilyPaymentsSummary';
+
 export default function Payments() {
-  const { currentClub, isClubAdmin, user } = useClub();
+  const { currentClub, isClubAdmin, user, familyMembers, isGuardian } = useClub();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
@@ -237,6 +239,11 @@ export default function Payments() {
             </GlassCard>
           </motion.div>
         </div>
+      )}
+
+      {/* Family Payments Summary - Show for guardians with family members */}
+      {isGuardian && familyMembers.length > 1 && (
+        <FamilyPaymentsSummary />
       )}
 
       {/* Filters */}

@@ -30,6 +30,10 @@ import Settings from "./Settings";
 
 import TeamManagement from "./TeamManagement";
 
+import MatchLive from "./MatchLive";
+
+import MatchCenter from "./MatchCenter";
+
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
 const PAGES = {
@@ -63,6 +67,10 @@ const PAGES = {
     Settings: Settings,
     
     TeamManagement: TeamManagement,
+    
+    MatchLive: MatchLive,
+    
+    MatchCenter: MatchCenter,
     
 }
 
@@ -120,6 +128,10 @@ function PagesContent() {
                 <Route path="/Settings" element={<Settings />} />
                 
                 <Route path="/TeamManagement" element={<TeamManagement />} />
+                
+                <Route path="/MatchLive" element={<MatchLive />} />
+                
+                <Route path="/MatchCenter" element={<MatchCenter />} />
                 
             </Routes>
         </Layout>
